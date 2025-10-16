@@ -25,7 +25,7 @@ SECRET_KEY = 'django-insecure-cuhtnvp!0k(lcxhasukcs8t6yosy20wtw_t(05xooc-sr0gn(=
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["www.imprimil.com", "imprimil.com", "localhost"]
+ALLOWED_HOSTS = ["www.imprimilfrotas.com", "imprimilfrotas.com", "localhost"]
 
 
 # Application definition
