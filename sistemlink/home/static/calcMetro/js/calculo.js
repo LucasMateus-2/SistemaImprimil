@@ -144,113 +144,132 @@ const salvaObjAdesivo = () => {
 	return resultadoObj;
 };
 
+function calcularOtimizado(adesivos, quantVeiculos, larguraMaterial = 130) {
+	// 1. Expandir todos os adesivos (já multiplicados pela quantidade de veículos)
+	let lista = [];
+	for (const nome in adesivos) {
+		const ad = adesivos[nome];
+		const total = ad.porVeiculo * quantVeiculos;
+		for (let i = 0; i < total; i++) {
+			lista.push({
+				nome: ad.nome,
+				largura: ad.largura + 1, // margem
+				altura: ad.altura + 1, // margem
+			});
+		}
+	}
+
+	// 2. Ordenar por largura (maior primeiro)
+	lista.sort((a, b) => b.largura - a.largura);
+
+	// 3. Preencher linhas
+	let linhas = [];
+	let linhaAtual = { usados: 0, altura: 0, adesivos: [] };
+
+	for (const adesivo of lista) {
+		if (linhaAtual.usados + adesivo.largura <= larguraMaterial) {
+			// Cabe na linha atual
+			linhaAtual.usados += adesivo.largura;
+			linhaAtual.altura = Math.max(linhaAtual.altura, adesivo.altura);
+			linhaAtual.adesivos.push(adesivo);
+		} else {
+			// Fecha a linha atual e abre uma nova
+			linhas.push(linhaAtual);
+			linhaAtual = {
+				usados: adesivo.largura,
+				altura: adesivo.altura,
+				adesivos: [adesivo],
+			};
+		}
+	}
+	// Adiciona a última linha
+	if (linhaAtual.adesivos.length > 0) {
+		linhas.push(linhaAtual);
+	}
+
+	// 4. Calcular altura total
+	const alturaTotal = linhas.reduce((soma, l) => soma + l.altura, 0);
+
+	// 5. Retornar resumo
+	return {
+		linhas,
+		alturaTotal,
+	};
+}
+
 function calcular() {
-	// 1. Obter CAMPOS GLOBAIS
 	const quantVeiculos = parseInt(
 		document.getElementById('quantidadeVeiculos').value
 	);
 	const larguraMaterial = 130;
 
 	if (isNaN(quantVeiculos) || quantVeiculos <= 0) {
-		alert(
-			'Por favor, insira a Quantidade de Veículos e a Largura do Material de Impressão corretamente.'
-		);
+		alert('Por favor, insira a Quantidade de Veículos corretamente.');
 		return;
 	}
 
-	// 2. Obter os dados dos adesivos (salvaObj() não está inclusa aqui, mas assumimos que funciona)
-	// Certifique-se de que a variável global 'adesivos' está definida.
 	adesivos = salvaObjAdesivo();
-	console.log(adesivos);
-
 	if (Object.keys(adesivos).length === 0) {
-		window.alert('Nenhum adesivo válido encontrado para calculo');
 		document.getElementById('resultado').innerHTML =
 			"<p class='warning'>Nenhum adesivo válido encontrado para cálculo.</p>";
 		return;
 	}
 
-	let alturaTotalImpressao = 0;
+	// 👉 Aqui usamos a versão otimizada
+	const resultado = calcularOtimizado(adesivos, quantVeiculos, larguraMaterial);
+	console.log('Resultado do cálculo otimizado:', resultado);
+	// Montar HTML de resumo por linha
 	let resumoHTML = '';
+	resultado.linhas.forEach((linha, i) => {
+		resumoHTML += `
+      <li>
+        <strong>Linha ${i + 1}</strong> 
+        (largura usada: ${linha.usados} cm, altura: ${linha.altura} cm)
+        <ul>
+          ${linha.adesivos
+						.map(
+							(ad) =>
+								`<li>${ad.nome} (${ad.largura - 1}x${ad.altura - 1} cm)</li>`
+						)
+						.join('')}
+        </ul>
+      </li>
+    `;
+	});
 
-	// 3. Iterar sobre cada tipo de adesivo para calcular sua altura otimizada
-	for (const nomeAdesivo in adesivos) {
-		const adesivo = adesivos[nomeAdesivo];
+	const area_em_cm2 = resultado.alturaTotal * larguraMaterial;
+	// Calcular área total (m²)
+	const areaTotal_m2 = (area_em_cm2 / 10000).toFixed(2);
 
-		const totalAdesivos = adesivo.porVeiculo * quantVeiculos;
-		const larguraComMargem = adesivo.largura + 1;
-		const alturaComMargem = adesivo.altura + 1;
-		const conjuntosPorLinha = Math.floor(larguraMaterial / larguraComMargem);
-
-		let resultadoAdesivo;
-
-		if (conjuntosPorLinha === 0) {
-			resultadoAdesivo = `<li class='error'><strong>${adesivo.nome} (${adesivo.largura}x${adesivo.altura}cm):</strong> ERRO! Largura excede o material. Não calculado.</li>`;
-		} else {
-			const quantidadeLinhas = Math.ceil(totalAdesivos / conjuntosPorLinha);
-			const alturaOcupada = quantidadeLinhas * alturaComMargem;
-			alturaTotalImpressao += alturaOcupada;
-
-			resultadoAdesivo = `
-          <li>
-              <strong>${adesivo.nome}</strong> (${adesivo.largura}x${
-				adesivo.altura
-			} cm):
-              <ul>
-                  <li>Total de Adesivos: <strong>${totalAdesivos}</strong></li>
-                  <li>Linhas Necessárias: <strong>${quantidadeLinhas}</strong></li>
-                  <li>Altura Ocupada (por tipo): <span class='height-detail'>${alturaOcupada.toFixed(
-										2
-									)} cm</span></li>
-              </ul>
-          </li>
-      `;
-		}
-		// ACUMULAMOS O HTML DE CADA ADESIVO
-		resumoHTML += resultadoAdesivo;
-	}
-
-	// 4. Calcular a área total de impressão (m²)
-	const areaTotal = (
-		(alturaTotalImpressao / 100) *
-		(larguraMaterial / 100)
-	).toFixed(2);
-
-	// 5. Exibir o resultado usando innerHTML (CORRIGIDO AQUI!)
+	// Exibir resultado
 	document.getElementById('resultado').innerHTML = `
     <div class="result-box">
-        
-		<div class="final-result">
-            <h3>Resultado Final da Impressão</h3>
-            <p>Área Total de Impressão:</p>
-            <div class="value-box area-value"><strong>${areaTotal}m²</strong> </div>
-        </div>
-        
-        <p class="nota">
-            <em>Nota: Os cálculos consideram uma margem de segurança de 1cm em altura e largura para cortes.</em>
+      <div class="final-result">
+        <h3>Resultado Final da Impressão</h3>
+        <p>Área Total de Impressão:</p>
+        <div class="value-box area-value"><strong>${areaTotal_m2}m²</strong></div>
+      </div>
+
+      <p class="nota">
+        <em>Nota: Os cálculos consideram uma margem de segurança de 1cm em altura e largura para cortes.</em>
+      </p>
+
+      <h2>📊 Resumo do Cálculo</h2>
+      <div class="section">
+        <h3>Dados Gerais do Projeto</h3>
+        <p><strong>Total de Veículos:</strong> ${quantVeiculos}</p>
+        <p>
+          <strong>Altura Total Necessária:</strong> 
+          <span class='height-detail' style='font-size:1.1em;'>${resultado.alturaTotal} cm</span>
         </p>
+      </div>
 
-		<h2>📊 Resumo do Cálculo</h2>
-
-        <div class="section">
-            <h3>Dados Gerais do Projeto</h3>
-            <p><strong>Total de Veículos:</strong> ${quantVeiculos}</p>
-            <p>
-                <strong>Altura Total Necessária:</strong> 
-                <span class='height-detail' style='font-size:1.1em;'>${alturaTotalImpressao.toFixed(
-									2
-								)} cm</span>
-            </p>
-        </div>
-        
-        
-        
-        <div class="section">
-            <h3>Otimização por Tipo de Adesivo</h3>
-            <ul class="adesivo-list">${resumoHTML}</ul> 
-        </div>
+      <div class="section">
+        <h3>Distribuição Otimizada por Linha</h3>
+        <ul class="adesivo-list">${resumoHTML}</ul> 
+      </div>
     </div>
-`;
+  `;
 }
 
 // ----------------------------------------------------
