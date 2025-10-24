@@ -12,7 +12,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = "django-insecure-cuhtnvp!0k(lcxhasukcs8t6yosy20wtw_t(05xooc-sr0gn(="
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [
     "www.imprimilfrotas.com",
