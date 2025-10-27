@@ -15,8 +15,8 @@ function adicionarAdesivo() {
 	div.innerHTML = `
     <h3>Adesivo ${index + 1}</h3>
     <button type="button" onclick="removerAdesivo(this)" class="btn-remover">Remover Adesivo</button>
-    <label>Nome do adesivo:</label>
-    <input type="text" class="nome-adesivo" name="nome" value="" required />
+    <label>Nome da Peça:</label>
+    <input type="text" class="nome-adesivo" name="nome" value="Adesivo-1" required />
     <label>Adesivos por veículo:</label>
     <input type="number" class="por-veiculo" name="porVeiculo" value="1" min="1" required />
     <label>Largura do adesivo (cm):</label>
@@ -145,52 +145,66 @@ const salvaObjAdesivo = () => {
 };
 
 function calcularOtimizado(adesivos, quantVeiculos, larguraMaterial = 130) {
-	// 1. Expandir todos os adesivos (já multiplicados pela quantidade de veículos)
-	let lista = [];
+	//Cria um array de objetos de adesivos
+	let listaAdesivos = [];
+
+	/*	
+		Percorre o objeto global de adesivos buscando o nome e quantidade por veículo,
+		multiplicando pela quantidade de veículos para obter o total de cada adesivo necessário.
+		Adiciona cada adesivo ao array 'listaAdesivos' com suas dimensões , 
+		baseado na quantidade de adesivos necessarios.
+	*/
 	for (const nome in adesivos) {
-		const ad = adesivos[nome];
-		const total = ad.porVeiculo * quantVeiculos;
+		const adesivo = adesivos[nome];
+		const total = adesivo.porVeiculo * quantVeiculos;
 		for (let i = 0; i < total; i++) {
-			lista.push({
-				nome: ad.nome,
-				largura: ad.largura + 1, // margem
-				altura: ad.altura + 1, // margem
+			listaAdesivos.push({
+				nome: adesivo.nome,
+				largura: adesivo.largura + 1, // margem
+				altura: adesivo.altura + 1, // margem
 			});
 		}
 	}
 
-	// 2. Ordenar por largura (maior primeiro)
-	lista.sort((a, b) => b.largura - a.largura);
+	listaAdesivos.sort((a, b) => b.largura - a.largura);
 
-	// 3. Preencher linhas
+	// Cria um array para armazenar as linhas de adesivos
 	let linhas = [];
-	let linhaAtual = { usados: 0, altura: 0, adesivos: [] };
+	// Cria um objeto para a linha atual
+	let linhaAtual = { larguraUsadaAtual: 0, alturaAtual: 0, adesivos: [] };
 
-	for (const adesivo of lista) {
-		if (linhaAtual.usados + adesivo.largura <= larguraMaterial) {
-			// Cabe na linha atual
-			linhaAtual.usados += adesivo.largura;
-			linhaAtual.altura = Math.max(linhaAtual.altura, adesivo.altura);
+	// Percorre a lista de adesivos
+	for (const adesivo of listaAdesivos) {
+		// Verifica se o adesivo cabe na linha atual baseado na largura atual + largura do adesivo
+		if (linhaAtual.larguraUsadaAtual + adesivo.largura <= larguraMaterial) {
+			// Adiciona a largura do adesiva à largura usada da linha atual
+			linhaAtual.larguraUsadaAtual += adesivo.largura;
+			// Verifica se altura do adesivo é maior que a altura atual da linha , e escolhe a maior para ser a nova altura da linha
+			console.log(` altura Atual ${linhaAtual.alturaAtual}`);
+			linhaAtual.alturaAtual = Math.max(linhaAtual.alturaAtual, adesivo.altura);
 			linhaAtual.adesivos.push(adesivo);
 		} else {
-			// Fecha a linha atual e abre uma nova
+			// Adiciona a linha atual ao array de linhas
 			linhas.push(linhaAtual);
 			linhaAtual = {
-				usados: adesivo.largura,
-				altura: adesivo.altura,
+				larguraUsadaAtual: adesivo.largura,
+				alturaAtual: adesivo.altura,
 				adesivos: [adesivo],
 			};
 		}
 	}
-	// Adiciona a última linha
+	// Adiciona a última linha se tiver adesivos
 	if (linhaAtual.adesivos.length > 0) {
 		linhas.push(linhaAtual);
 	}
 
-	// 4. Calcular altura total
-	const alturaTotal = linhas.reduce((soma, l) => soma + l.altura, 0);
+	// Calcular altura total somando a altura de cada linha
+	const alturaTotal = linhas.reduce(
+		(SomaValorAltura, linha) => SomaValorAltura + linha.alturaAtual,
+		0
+	);
 
-	// 5. Retornar resumo
+	// Retorna resumo
 	return {
 		linhas,
 		alturaTotal,
@@ -215,16 +229,17 @@ function calcular() {
 		return;
 	}
 
-	// 👉 Aqui usamos a versão otimizada
 	const resultado = calcularOtimizado(adesivos, quantVeiculos, larguraMaterial);
 	console.log('Resultado do cálculo otimizado:', resultado);
-	// Montar HTML de resumo por linha
+
 	let resumoHTML = '';
 	resultado.linhas.forEach((linha, i) => {
 		resumoHTML += `
       <li>
         <strong>Linha ${i + 1}</strong> 
-        (largura usada: ${linha.usados} cm, altura: ${linha.altura} cm)
+        (largura usada: ${linha.larguraUsadaAtual} cm, altura: ${
+			linha.alturaAtual
+		} cm)
         <ul>
           ${linha.adesivos
 						.map(
