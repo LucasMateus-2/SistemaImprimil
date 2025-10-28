@@ -1,0 +1,60 @@
+body {
+	font-family: 'Segoe UI', sans-serif;
+	background: linear-gradient(135deg, #fd8036, #123add);
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	min-height: 100vh;
+	font-size: 15px;
+	height: 100%;
+}
+
+.container {
+	background: white;
+	padding: 24px; /* ↓ reduzido de 30px */
+	border-radius: 10px;
+	box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+	width: 90%;
+	max-width: 1000px;
+	text-align: center;
+	margin-bottom: 20px; /* ✅ espaço entre container e próximo bloco */
+}
+
+.container-glass {
+	background: rgba(255, 255, 255, 0.15); /* fundo translúcido */
+	border-radius: 16px;
+	padding: 2rem;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	backdrop-filter: blur(12px); /* efeito de vidro */
+	-webkit-backdrop-filter: blur(12px); /* suporte Safari */
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2); /* sombra suave */
+	color: #fff; /* texto branco para contraste */
+}
+
+.btn-glass {
+	background: rgba(255, 255, 255, 0.15); /* fundo translúcido */
+	border-radius: 12px;
+	padding: 12px 24px;
+	color: #fff;
+	font-size: 1.1rem;
+	font-weight: 500;
+	border: 1px solid rgba(255, 255, 255, 0.3);
+	backdrop-filter: blur(10px); /* efeito de vidro */
+	-webkit-backdrop-filter: blur(10px); /* suporte Safari */
+	box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+	cursor: pointer;
+	transition: all 0.3s ease;
+}
+
+.btn-glass:hover {
+	background: rgba(255, 255, 255, 0.25);
+	transform: scale(1.05);
+}
+
+a {
+	color: #fff;
+	text-decoration: none;
+}
